@@ -8,6 +8,7 @@ import java.util.ArrayList;
 import java.util.stream.Stream;
 
 import libsidplay.sidtune.SidTune;
+import libsidplay.sidtune.SidTuneError;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
 import org.apache.lucene.document.Document;
@@ -41,7 +42,11 @@ public class SidDatabase {
         /** HVSC path of the tune */
         public Path path;
 
-        /** Retrieve SID tune info from a search document */
+        /**
+         * Retrieve SID tune info from a search document
+         *
+         * @param doc the document to get info from
+         */
         public SidInfo(Document doc) {
             this.title = doc.get(TITLE_FIELD);
             this.artist = doc.get(ARTIST_FIELD);
@@ -166,7 +171,8 @@ public class SidDatabase {
         // Perform search
         ScoreDoc[] hits = this.searcher.search(q, 10).scoreDocs;
 
-        // Aggregate relevant results
+        // Aggregate relevant results, cutting off any documents with a score less than
+        // the top score minus a relevancy threshold defined above
         ArrayList<SidInfo> relevant = new ArrayList<SidInfo>();
         if (hits.length > 0) {
             float topScore = hits[0].score;
@@ -179,5 +185,19 @@ public class SidDatabase {
         }
 
         return relevant;
+    }
+
+    /**
+     * Load a SID tune given a relative HVSC path
+     *
+     * @param path the HVSC path to load from
+     *
+     * @return the loaded SID tune
+     *
+     * @throws IOException if the file is not accessible
+     * @throws SidTuneError if the file is not a valid SID tune
+     */
+    public SidTune load(Path path) throws IOException, SidTuneError {
+        return SidTune.load(this.basePath.resolve(path).toFile());
     }
 }

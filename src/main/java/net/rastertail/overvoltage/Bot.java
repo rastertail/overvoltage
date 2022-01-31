@@ -1,13 +1,20 @@
 package net.rastertail.overvoltage;
 
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 
+import libsidplay.sidtune.SidTune;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
+import net.dv8tion.jda.api.events.interaction.component.SelectMenuInteractionEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
+import net.dv8tion.jda.api.interactions.callbacks.IReplyCallback;
 import net.dv8tion.jda.api.interactions.commands.OptionType;
 import net.dv8tion.jda.api.interactions.commands.build.Commands;
 import net.dv8tion.jda.api.interactions.commands.build.OptionData;
+import net.dv8tion.jda.api.interactions.components.selections.SelectMenu;
+import net.dv8tion.jda.api.interactions.components.selections.SelectOption;
 import net.dv8tion.jda.api.requests.restaction.CommandListUpdateAction;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -50,7 +57,11 @@ public class Bot extends ListenerAdapter {
         LOG.info("Updated slash commands");
     }
 
-    /** Slash command handler */
+    /**
+     * Slash command handler
+     *
+     * @param ev slash command interaction event
+     **/
     @Override
     public void onSlashCommandInteraction(SlashCommandInteractionEvent ev) {
         // Only allow commands from guilds
@@ -62,27 +73,95 @@ public class Bot extends ListenerAdapter {
             // Dispatch event handler
             switch (ev.getName()) {
                 case "play":
+                    // Perform search
                     ArrayList<SidDatabase.SidInfo> results
                         = this.sidDb.search(ev.getOption("query").getAsString());
 
-                    StringBuilder b = new StringBuilder();
-                    for (SidDatabase.SidInfo info : results) {
-                        b.append(info.artist);
-                        b.append(" - ");
-                        b.append(info.title);
-                        b.append(" (");
-                        b.append(info.released);
-                        b.append(")\n");
+                    if (results.size() == 0) {
+                        // No results found
+                        LOG.debug("Search yielded no results");
+                        ev.reply("❌ No results found!").queue();
+                    } else if (results.size() == 1) {
+                        // Exactly one result found
+                        this.playTune(ev, results.get(0).path);
+                    } else {
+                        // Multiple results found
+                        this.promptChoice(ev, results);
                     }
 
-                    ev.reply(b.toString()).queue();
-
                     break;
-                default:
-                    ev.reply("unimplemented").setEphemeral(true).queue();
             }
         } catch (Exception e) {
             ev.reply(e.toString()).setEphemeral(true).queue();
         }
+    }
+
+    /**
+     * Select menu interaction handler
+     *
+     * @param ev select menu interaction event
+     **/
+    @Override
+    public void onSelectMenuInteraction(SelectMenuInteractionEvent ev) {
+        // TODO Do not assume all menu interactions should lead to a tune playing
+        this.playTune(ev, Paths.get(ev.getValues().get(0)));
+    }
+
+    /**
+     * Play a SID tune
+     *
+     * @param ev the event that prompted the tune to play
+     * @param path the HVSC path to the tune
+     */
+    private void playTune(IReplyCallback ev, Path path) {
+        LOG.debug("Playing SID tune from {}", path);
+
+        try {
+            // Load tune and extract info
+            SidTune tune = this.sidDb.load(path);
+            String[] tuneInfo = tune.getInfo().getInfoString().toArray(new String[] {});
+
+            // Send playback message
+            ev.replyFormat(
+                "🎶 Now playing **%s** by **%s**!",
+                tuneInfo[0],
+                tuneInfo[1]
+            ).queue();
+        } catch (Exception e) {
+            LOG.error("Error starting SID playback: {}", e);
+            ev.reply("❌ An unexpected error occurred!").queue();
+        }
+    }
+
+    /**
+     * Prompt the user to select from a choice of multiple tunes
+     *
+     * @param ev slash command interaction event
+     * @param choices the tunes to choose from
+     **/
+    private void promptChoice(
+        SlashCommandInteractionEvent ev,
+        ArrayList<SidDatabase.SidInfo> choices
+    ) {
+        LOG.debug("Search yielded multiple results... prompting for a choice!");
+
+        // Build reply menu
+        SelectMenu.Builder menu = SelectMenu.create("sid_chooser")
+            .setPlaceholder("Make a choice...")
+            .setRequiredRange(1, 1);
+
+        for (SidDatabase.SidInfo choice : choices) {
+            menu.addOption(
+                choice.title,
+                choice.path.toString(),
+                choice.artist + " • " + choice.released
+            );
+        }
+
+        // Send reply
+        ev.reply("Please make a selection")
+            .addActionRow(menu.build())
+            .setEphemeral(true)
+            .queue();
     }
 }
