@@ -5,7 +5,6 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.EnumSet;
 import java.util.concurrent.Callable;
-import java.util.concurrent.locks.LockSupport;
 import javax.security.auth.login.LoginException;
 
 import picocli.CommandLine;
@@ -62,7 +61,7 @@ public class Overvoltage implements Callable<Integer> {
             }
 
             // Block main thread forever
-            LockSupport.park();
+            this.wait();
         } catch (Exception e) {
             LOG.error("Uncaught exception: {}", e);
             return -1;
