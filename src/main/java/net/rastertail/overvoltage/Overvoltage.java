@@ -59,9 +59,6 @@ public class Overvoltage implements Callable<Integer> {
             if (this.updateCommands) {
                 bot.updateCommands(jda);
             }
-
-            // Block main thread forever
-            this.wait();
         } catch (Exception e) {
             LOG.error("Uncaught exception: {}", e);
             return -1;
@@ -76,6 +73,9 @@ public class Overvoltage implements Callable<Integer> {
      * @param args commandline arguments
      */
     public static void main(String[] args) {
-        System.exit(new CommandLine(new Overvoltage()).execute(args));
+        Integer exitCode = new CommandLine(new Overvoltage()).execute(args);
+        if (exitCode != 0) {
+            System.exit(exitCode);
+        }
     }
 }
