@@ -1,11 +1,18 @@
 package net.rastertail.overvoltage;
 
+import java.nio.ByteBuffer;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 
 import libsidplay.sidtune.SidTune;
+import sidplay.ini.IniConfig;
 import net.dv8tion.jda.api.JDA;
+import net.dv8tion.jda.api.managers.AudioManager;
+import net.dv8tion.jda.api.entities.AudioChannel;
+import net.dv8tion.jda.api.entities.Guild;
+import net.dv8tion.jda.api.entities.GuildVoiceState;
+import net.dv8tion.jda.api.entities.Member;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 import net.dv8tion.jda.api.events.interaction.component.SelectMenuInteractionEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
@@ -120,6 +127,37 @@ public class Bot extends ListenerAdapter {
             // Load tune and extract info
             SidTune tune = this.sidDb.load(path);
             String[] tuneInfo = tune.getInfo().getInfoString().toArray(new String[] {});
+
+            // Prepare tune for playback
+            tune.getInfo().setSelectedSong(1);
+            tune.prepare();
+
+            // Find voice channel, bailing out if it does not exist
+            Member member = ev.getMember();
+            GuildVoiceState voiceState = member.getVoiceState();
+            AudioChannel voiceChannel = voiceState.getChannel();
+            if (voiceChannel == null) {
+                ev.reply("❌ You are not in a voice channel!").queue();
+                return;
+            }
+
+            // Create guild voice sender if it does not yet exist
+            Guild guild = voiceChannel.getGuild();
+            AudioManager audioManager = guild.getAudioManager();
+            if (audioManager.getSendingHandler() == null) {
+                VoiceSender sender = new VoiceSender();
+                audioManager.setSendingHandler(sender);
+            }
+
+            // Connect to voice
+            if (!audioManager.isConnected()) {
+                audioManager.openAudioConnection(voiceChannel);
+            }
+
+            // Start playing tune
+            ((VoiceSender) audioManager.getSendingHandler()).runInRenderThread(
+                player -> player.play(tune)
+            );
 
             // Send playback message
             ev.replyFormat(

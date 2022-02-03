@@ -3,7 +3,6 @@ package net.rastertail.overvoltage;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.util.EnumSet;
 import java.util.concurrent.Callable;
 import javax.security.auth.login.LoginException;
 
@@ -13,6 +12,7 @@ import picocli.CommandLine.Option;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.JDABuilder;
 import net.dv8tion.jda.api.requests.GatewayIntent;
+import net.dv8tion.jda.api.utils.cache.CacheFlag;
 import org.apache.lucene.store.FSDirectory;
 import org.apache.lucene.store.Directory;
 import org.slf4j.Logger;
@@ -51,8 +51,10 @@ public class Overvoltage implements Callable<Integer> {
 
             // Connect to Discord
             Bot bot = new Bot(sidDb);
-            JDA jda = JDABuilder.createLight(bot_token, EnumSet.noneOf(GatewayIntent.class))
+            JDA jda = JDABuilder.createDefault(bot_token, GatewayIntent.GUILD_VOICE_STATES)
                 .addEventListeners(bot)
+                .enableCache(CacheFlag.VOICE_STATE)
+                .disableCache(CacheFlag.EMOTE)
                 .build();
 
             // Potentially update slash commands
