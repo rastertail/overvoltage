@@ -25,9 +25,16 @@ public class VoiceSender extends Thread implements AudioSendHandler {
     /** Construct a new voice sender */
     public VoiceSender() {
         IniConfig config = new IniConfig();
+
+        // Set up audio properties
         config.getAudioSection().setSamplingRate(SamplingRate.MEDIUM); // 48khz
         config.getAudioSection().setBufferSize(960); // 20ms
         config.getAudioSection().setAudioBufferSize(960);
+
+        // Fix 6581 filter to be a bit more neutral
+        config.getEmulationSection().setReSIDfpFilter6581("FilterNata6581R3_2083");
+        config.getEmulationSection().setReSIDfpStereoFilter6581("FilterNata6581R3_2083");
+        config.getEmulationSection().setReSIDfpThirdSIDFilter6581("FilterNata6581R3_2083");
 
         this.player = new SidPlayer(config);
         this.actionQueue = new LinkedBlockingQueue<Consumer<SidPlayer>>(3);
