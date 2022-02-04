@@ -97,6 +97,9 @@ public class Bot extends ListenerAdapter {
                     }
 
                     break;
+                case "leave":
+                    this.leave(ev);
+                    break;
             }
         } catch (Exception e) {
             ev.reply(e.toString()).setEphemeral(true).queue();
@@ -201,5 +204,43 @@ public class Bot extends ListenerAdapter {
             .addActionRow(menu.build())
             .setEphemeral(true)
             .queue();
+    }
+
+    /**
+     * Disconnect from voice and clean up
+     *
+     * @param ev the event that prompted this command
+     */
+    private void leave(IReplyCallback ev) {
+        // Find voice channel, bailing out if it does not exist
+        Member member = ev.getMember();
+        GuildVoiceState voiceState = member.getVoiceState();
+        AudioChannel voiceChannel = voiceState.getChannel();
+        if (voiceChannel == null) {
+            ev.reply("❌ You are not in a voice channel!").queue();
+            return;
+        }
+
+        // Check if we are in the same voice channel, or even in one at all
+        Guild guild = voiceChannel.getGuild();
+        AudioManager audioManager = guild.getAudioManager();
+        AudioChannel connectedChannel = audioManager.getConnectedChannel();
+        if (connectedChannel == null) {
+            ev.reply("❌ I am not in a voice channel!").queue();
+            return;
+        }
+        if (!connectedChannel.equals(voiceChannel)) {
+            ev.reply("❌ Please join the same voice channel as me!").queue();
+            return;
+        }
+
+        // Disconnect from voice
+        audioManager.closeAudioConnection();
+
+        // Drop voice handler
+        audioManager.setSendingHandler(null);
+
+        // Confirm that the bot left
+        ev.reply("👋 Goodbye!").queue();
     }
 }
