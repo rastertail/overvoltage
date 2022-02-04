@@ -4,8 +4,8 @@ import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import libsidplay.common.EventScheduler;
 import libsidplay.common.CPUClock;
+import libsidplay.common.EventScheduler;
 import libsidplay.config.IAudioSection;
 import sidplay.audio.AudioDriver;
 

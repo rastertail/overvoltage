@@ -52,7 +52,11 @@ public class SidPlayer extends HardwareEnsemble {
      * @param tune the SID tune to play
      */
     public void play(SidTune tune) {
+        // Update clock speed
         this.setClock(CPUClock.getCPUClock(this.config.getEmulationSection(), tune));
+
+        // Reset machine
+        this.reset();
 
         // Insert SID chips required for tune
         this.c64.insertSIDChips(
@@ -66,9 +70,6 @@ public class SidPlayer extends HardwareEnsemble {
             },
             sidNum -> SidTune.getSIDAddress(config.getEmulationSection(), tune, sidNum)
         );
-
-        // Reset machine
-        this.reset();
 
         // Schedule tune autoload
         this.c64.getEventScheduler().schedule(new Event("Tune autoload") {

@@ -5,6 +5,7 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.function.Consumer;
 
 import net.dv8tion.jda.api.audio.AudioSendHandler;
+import libsidplay.common.SamplingMethod;
 import libsidplay.common.SamplingRate;
 import libsidplay.sidtune.SidTune;
 import org.slf4j.Logger;
@@ -35,6 +36,9 @@ public class VoiceSender extends Thread implements AudioSendHandler {
         config.getEmulationSection().setReSIDfpFilter6581("FilterNata6581R3_2083");
         config.getEmulationSection().setReSIDfpStereoFilter6581("FilterNata6581R3_2083");
         config.getEmulationSection().setReSIDfpThirdSIDFilter6581("FilterNata6581R3_2083");
+
+        // Enable high quality resampling
+        config.getAudioSection().setSampling(SamplingMethod.RESAMPLE);
 
         this.player = new SidPlayer(config);
         this.actionQueue = new LinkedBlockingQueue<Consumer<SidPlayer>>(3);
