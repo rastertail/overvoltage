@@ -18,7 +18,7 @@
     <repositories>
         <repository>
             <id>lib</id>
-            <url>file://${project.basedir}/lib</url>
+            <url>https://overvoltage.blob.core.windows.net/lib</url>
         </repository>
     </repositories>
     
@@ -69,6 +69,35 @@
                 <configuration>
                     <mainClass>net.rastertail.overvoltage.Overvoltage</mainClass>
                 </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-dependency-plugin</artifactId>
+                <version>3.2.0</version>
+                <executions>
+                    <execution>
+                        <id>copy-dependencies</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>copy-dependencies</goal>
+                        </goals>
+                        <configuration>
+                            <outputDirectory>${project.build.directory}</outputDirectory>
+                            <overWriteReleases>false</overWriteReleases>
+                            <overWriteSnapshots>false</overWriteSnapshots>
+                            <overWriteIfNewer>true</overWriteIfNewer>
+                        </configuration>
+                    </execution>
+                </executions>
+
+                <!-- mvn2nix-maven-plugin workaround -->
+                <dependencies>
+                    <dependency>
+                        <groupId>org.ow2.asm</groupId>
+                        <artifactId>asm</artifactId>
+                        <version>9.1</version>
+                    </dependency>
+                </dependencies>
             </plugin>
         </plugins>
     </build>

@@ -23,6 +23,29 @@
           sha256 = "FDJfDqIqC1r84XqF/da06WI05KGVXTgYR0g85c4tljc=";
         };
 
+        packages.overvoltage = let
+          overvoltage = (pkgs.buildMaven ./project-info.json);
+        in pkgs.stdenv.mkDerivation {
+          pname = "overvoltage";
+          version = overvoltage.info.project.version;
+
+          src = ./.;
+          
+          nativeBuildInputs = [ pkgs.maven pkgs.makeWrapper ];
+          buildInputs = [ pkgs.jdk ];
+          buildPhase = "mvn --offline --settings ${overvoltage.settings} compile";
+          installPhase = ''
+            mkdir -p $out/share/java
+            mkdir -p $out/bin
+
+            mvn --offline --settings ${overvoltage.settings} package
+            cp target/*.jar $out/share/java/
+
+            makeWrapper ${pkgs.jre}/bin/java $out/bin/overvoltage \
+              --add-flags "-cp '$out/share/java/*' net.rastertail.overvoltage.Overvoltage"
+          '';
+        };
+
         devShell = pkgs.mkShell {
           buildInputs = [
             pkgs.jdk pkgs.maven pkgs.java-language-server
