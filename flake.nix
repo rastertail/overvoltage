@@ -46,6 +46,22 @@
           '';
         };
 
+        packages.container = pkgs.dockerTools.buildLayeredImage {
+          name = "overvoltage";
+          tag = packages.overvoltage.version;
+          contents = [ packages.overvoltage packages.hvsc ];
+
+          config = {
+            Cmd = [ "overvoltage" ];
+            Env = [
+              "HVSC_PATH=${packages.hvsc}"
+              "DATA_DIR=/var/overvoltage"
+            ];
+          };
+        };
+
+        defaultPackage = packages.overvoltage;
+
         devShell = pkgs.mkShell {
           buildInputs = [
             pkgs.jdk pkgs.maven pkgs.java-language-server
