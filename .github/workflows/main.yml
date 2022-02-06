@@ -27,4 +27,4 @@ jobs:
       - name: Tag image
         run: docker tag "overvoltage:$VERSION" "overvoltage.azurecr.io/overvoltage:$VERSION"
       - name: Push image
-        run: docker push overvoltage.azurecr.io/overvoltage
+        run: docker push "overvoltage.azurecr.io/overvoltage:$VERSION"
