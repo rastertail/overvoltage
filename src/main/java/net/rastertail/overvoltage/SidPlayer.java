@@ -71,6 +71,21 @@ public class SidPlayer extends HardwareEnsemble {
             sidNum -> SidTune.getSIDAddress(config.getEmulationSection(), tune, sidNum)
         );
 
+        // Update chip panning
+        if (SidTune.isSIDUsed(this.config.getEmulationSection(), tune, 2)) {
+            // 3SID: hard panning
+            this.sidBuilder.setBalance(0, 0.0f);
+            this.sidBuilder.setBalance(1, 1.0f);
+            this.sidBuilder.setBalance(2, 0.5f);
+        } else if (SidTune.isSIDUsed(this.config.getEmulationSection(), tune, 1)) {
+            // 2SID: soft panning
+            this.sidBuilder.setBalance(0, 0.25f);
+            this.sidBuilder.setBalance(1, 0.75f);
+        } else {
+            // No panning
+            this.sidBuilder.setBalance(0, 0.5f);
+        }
+
         // Schedule tune autoload
         this.c64.getEventScheduler().schedule(new Event("Tune autoload") {
             @Override
