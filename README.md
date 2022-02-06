@@ -24,6 +24,8 @@ This can be done either with `nix build .#container` within the repository, or w
 Next, install the image into Docker with `docker load < ./result`.
 Finally, you must manually specify a tempdir for the container with `--tmpfs /tmp:exec`, pass in the `BOT_TOKEN` environment variable, and optionally mount a volume to `/var/overvoltage` to persist the SID search index.
 
+Tagged releases have publicly available images under `overvoltage.azurecr.io/overvoltage:<version>`
+
 ## Legal
 
 Overvoltage is licensed under the GNU General Public License Version 3.
