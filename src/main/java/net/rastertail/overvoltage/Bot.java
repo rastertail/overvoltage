@@ -13,6 +13,7 @@ import net.dv8tion.jda.api.entities.AudioChannel;
 import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.GuildVoiceState;
 import net.dv8tion.jda.api.entities.Member;
+import net.dv8tion.jda.api.events.guild.voice.GuildVoiceLeaveEvent;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 import net.dv8tion.jda.api.events.interaction.component.SelectMenuInteractionEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
@@ -117,6 +118,23 @@ public class Bot extends ListenerAdapter {
         this.playTune(ev, Paths.get(ev.getValues().get(0)));
     }
 
+    @Override
+    public void onGuildVoiceLeave(GuildVoiceLeaveEvent ev) {
+        // Check if we are the one that disconnected
+        if (ev.getMember().getId().equals(ev.getJDA().getSelfUser().getId())) {
+            // Get audio manager to clean up resources
+            AudioManager audioManager = ev.getGuild().getAudioManager();
+            LOG.debug("Cleaning up {}...", ev.getGuild());
+
+            // Drop voice handler
+            audioManager.setSendingHandler(null);
+        } else if (ev.getChannelLeft().getMembers().size() == 1) {
+            // Disconnect from voice if we are the only one left
+            AudioManager audioManager = ev.getGuild().getAudioManager();
+            audioManager.closeAudioConnection();
+        }
+    }
+
     /**
      * Play a SID tune
      *
@@ -148,14 +166,13 @@ public class Bot extends ListenerAdapter {
             Guild guild = voiceChannel.getGuild();
             AudioManager audioManager = guild.getAudioManager();
             if (audioManager.getSendingHandler() == null) {
+                LOG.debug("Setting up on {}...", guild);
                 VoiceSender sender = new VoiceSender();
                 audioManager.setSendingHandler(sender);
             }
 
             // Connect to voice
-            if (!audioManager.isConnected()) {
-                audioManager.openAudioConnection(voiceChannel);
-            }
+            audioManager.openAudioConnection(voiceChannel);
 
             // Start playing tune
             ((VoiceSender) audioManager.getSendingHandler()).runInRenderThread(
@@ -236,9 +253,6 @@ public class Bot extends ListenerAdapter {
 
         // Disconnect from voice
         audioManager.closeAudioConnection();
-
-        // Drop voice handler
-        audioManager.setSendingHandler(null);
 
         // Confirm that the bot left
         ev.reply("👋 Goodbye!").queue();
