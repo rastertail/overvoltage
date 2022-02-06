@@ -33,9 +33,9 @@ public class VoiceSender extends Thread implements AudioSendHandler {
         config.getAudioSection().setAudioBufferSize(960);
 
         // Fix 6581 filter to be a bit more neutral
-        config.getEmulationSection().setReSIDfpFilter6581("FilterNata6581R3_2083");
-        config.getEmulationSection().setReSIDfpStereoFilter6581("FilterNata6581R3_2083");
-        config.getEmulationSection().setReSIDfpThirdSIDFilter6581("FilterNata6581R3_2083");
+        config.getEmulationSection().setReSIDfpFilter6581("FilterTrurl6581R4AR_4486");
+        config.getEmulationSection().setReSIDfpStereoFilter6581("FilterTrurl6581R4AR_4486");
+        config.getEmulationSection().setReSIDfpThirdSIDFilter6581("FilterTrurl6581R4AR_4486");
 
         // Enable high quality resampling
         config.getAudioSection().setSampling(SamplingMethod.RESAMPLE);
